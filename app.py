@@ -27,7 +27,7 @@ def diagnosis(file, model):
 
     try:
         # Attempt to read the image from the file
-        image = mh.imread(file)
+        image = imageio.imread(file)
     except Exception as e:
         # Print an error message if the image cannot be read
         print(f"Error reading image from {file}: {e}")
@@ -41,9 +41,9 @@ def diagnosis(file, model):
     # You may need to adjust this part based on your specific requirements
     # For example, normalizing the image, resizing, etc.
 
-    # Resize the image to the desired size
+    # Check if the image has more than 2 dimensions (i.e., it's RGB or has an alpha channel)
     if len(image.shape) > 2:
-        # If the image is RGB, resize each channel separately
+        # Resize RGB and PNG images
         resized_channels = [mh.resize(image[:, :, i], (IMM_SIZE, IMM_SIZE)) for i in range(image.shape[2])]
         image = np.stack(resized_channels, axis=-1)
     else:
@@ -98,7 +98,6 @@ def main():
         except Exception as e:
             st.error(f"Error during diagnosis: {e}")
             print("Error during diagnosis:", e)
-
 
 if __name__ == "__main__":
     main()
