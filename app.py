@@ -1,8 +1,10 @@
+import imageio
 import streamlit as st
 import numpy as np
 from tensorflow.keras.models import model_from_json
 import pickle
 import mahotas as mh
+import imageio  # Add this import statement
 
 # Function to load the model
 def load_model():
