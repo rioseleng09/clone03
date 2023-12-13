@@ -1,4 +1,3 @@
-import imageio
 import streamlit as st
 import numpy as np
 from tensorflow.keras.models import model_from_json
