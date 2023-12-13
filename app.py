@@ -50,8 +50,8 @@ def main():
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
     # Specify the URLs of lab and history pickles on GitHub
-    lab_pickle_url = "https://raw.githubusercontent.com/your_username/your_repository/main/lab.pickle"
-    history_pickle_url = "https://raw.githubusercontent.com/your_username/your_repository/main/history.pickle"
+    # lab_pickle_url = "https://raw.githubusercontent.com/your_username/your_repository/main/lab.pickle"
+    # history_pickle_url = "https://raw.githubusercontent.com/your_username/your_repository/main/history.pickle"
 
     if uploaded_file is not None:
         st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
