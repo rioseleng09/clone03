@@ -3,22 +3,22 @@ import numpy as np
 from tensorflow.keras.models import model_from_json
 from tensorflow.keras.preprocessing import image
 import pickle
-import requests
-from io import BytesIO
 
 # Function to load the model
-def load_model(model_path='model.json', weights_path='model.h5'):
+def load_model():
     # Load model architecture from JSON file
-    with open(model_path, 'r') as json_file:
+    with open('model.json', 'r') as json_file:
         loaded_model_json = json_file.read()
 
     # Close the JSON file
     model = model_from_json(loaded_model_json)
 
     # Load weights into the new model
-    model.load_weights(weights_path)
+    model.load_weights('model.h5')
 
     return model
+
+# ...
 
 # Function to make a diagnosis
 def diagnosis(file, model, IMM_SIZE):
@@ -38,20 +38,12 @@ def diagnosis(file, model, IMM_SIZE):
 
     return predicted_diagnosis
 
-# Function to fetch pickle file from GitHub
-def fetch_pickle_from_github(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return pickle.load(BytesIO(response.content))
+# ...
 
 # Main Streamlit app
 def main():
     st.title("Chest X-ray Image Diagnosis App")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-
-    # Specify the URLs of lab and history pickles on GitHub
-    # lab_pickle_url = "https://raw.githubusercontent.com/your_username/your_repository/main/lab.pickle"
-    # history_pickle_url = "https://raw.githubusercontent.com/your_username/your_repository/main/history.pickle"
 
     if uploaded_file is not None:
         st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
@@ -72,24 +64,8 @@ def main():
             st.error(f"Error during diagnosis: {e}")
             print("Error during diagnosis:", e)
 
-        # Additional processing using lab and history pickles
-        try:
-            # Load lab data
-            lab_data = fetch_pickle_from_github(lab_pickle_url)
-
-            # Load history data
-            history_data = fetch_pickle_from_github(history_pickle_url)
-
-            # Perform further analysis using lab and history data
-            st.write("Lab Data:", lab_data)
-            st.write("History Data:", history_data)
-            # ...
-
-        except Exception as e:
-            st.error(f"Error during additional processing: {e}")
-            print("Error during additional processing:", e)
-
 # ...
+
 
 if __name__ == "__main__":
     main()
