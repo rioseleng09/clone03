@@ -42,7 +42,13 @@ def diagnosis(file, model):
     # For example, normalizing the image, resizing, etc.
 
     # Resize the image to the desired size
-    image = mh.resize_to(image, [IMM_SIZE, IMM_SIZE])
+    if len(image.shape) > 2:
+        # If the image is RGB, resize each channel separately
+        resized_channels = [mh.resize(image[:, :, i], (IMM_SIZE, IMM_SIZE)) for i in range(image.shape[2])]
+        image = np.stack(resized_channels, axis=-1)
+    else:
+        # Resize grayscale images
+        image = mh.resize(image, (IMM_SIZE, IMM_SIZE))
 
     # Convert RGB to grayscale if the image is in color
     if len(image.shape) > 2:
