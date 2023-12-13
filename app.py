@@ -20,6 +20,9 @@ def load_model():
 
     return model
 
+from PIL import Image
+import cv2
+
 # Function to make a diagnosis
 def diagnosis(file, model):
     IMM_SIZE = 224  # Replace with your desired size
@@ -29,7 +32,8 @@ def diagnosis(file, model):
 
     try:
         # Attempt to read the image from the file
-        image = imageio.imread(file)
+        pil_image = Image.open(file)
+        image = np.array(pil_image)
     except Exception as e:
         # Print an error message if the image cannot be read
         print(f"Error reading image from {file}: {e}")
@@ -40,21 +44,23 @@ def diagnosis(file, model):
         return None
 
     # Prepare image for classification
-    # You may need to adjust this part based on your specific requirements
-    # For example, normalizing the image, resizing, etc.
-
-    # Check if the image has more than 2 dimensions (i.e., it's RGB or has an alpha channel)
-    if len(image.shape) > 2:
-        # Resize RGB and PNG images
-        resized_channels = [mh.resize(image[:, :, i], (IMM_SIZE, IMM_SIZE)) for i in range(image.shape[2])]
-        image = np.stack(resized_channels, axis=-1)
-    else:
-        # Resize grayscale images
-        image = mh.resize(image, (IMM_SIZE, IMM_SIZE))
+    # Resize the image to the desired size
+    resized_image = cv2.resize(image, (IMM_SIZE, IMM_SIZE))
 
     # Convert RGB to grayscale if the image is in color
-    if len(image.shape) > 2:
-        image = mh.colors.rgb2grey(image[:, :, :3], dtype=np.uint8)
+    if len(resized_image.shape) > 2:
+        resized_image = cv2.cvtColor(resized_image, cv2.COLOR_RGB2GRAY)
+
+    # Reshape input images
+    resized_image = resized_image.reshape(-1, IMM_SIZE, IMM_SIZE, 1)
+
+    # Normalize the data (if needed)
+    # You may need to adjust this part based on how you trained your model
+    resized_image = resized_image / 255.0
+
+    # Predict the diagnosis
+    predicted_probabilities = model.predict(resized_image)
+    diag = np.argmax(predicted_probabilities, axis=-1)
 
     # Load history and lab from pickle files
     with open('history.pickle', 'rb') as f:
@@ -62,18 +68,6 @@ def diagnosis(file, model):
 
     with open('lab.pickle', 'rb') as f:
         lab = pickle.load(f)
-
-    # Normalize the data (if needed)
-    # You may need to adjust this part based on how you trained your model
-    image = np.array(image) / 255
-
-    # Reshape input images
-    # You may need to adjust this part based on your model's input shape
-    image = image.reshape(-1, IMM_SIZE, IMM_SIZE, 1)
-
-    # Predict the diagnosis
-    predicted_probabilities = model.predict(image)
-    diag = np.argmax(predicted_probabilities, axis=-1)
 
     # Find the name of the diagnosis
     diag = list(lab.keys())[list(lab.values()).index(diag[0])]
