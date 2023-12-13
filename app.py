@@ -1,83 +1,49 @@
 import streamlit as st
 import numpy as np
 from tensorflow.keras.models import model_from_json
+from tensorflow.keras.preprocessing import image
 import pickle
-import mahotas as mh
-import imageio  # Add this import statement
 
 # Function to load the model
-def load_model():
+def load_model(model_path='model.json', weights_path='model.h5'):
     # Load model architecture from JSON file
-    with open('model.json', 'r') as json_file:
+    with open(model_path, 'r') as json_file:
         loaded_model_json = json_file.read()
 
-    # Load the Keras model
+    # Close the JSON file
     model = model_from_json(loaded_model_json)
 
     # Load weights into the new model
-    model.load_weights('model.h5')
+    model.load_weights(weights_path)
 
     return model
 
-from PIL import Image
-import cv2
-
 # Function to make a diagnosis
-def diagnosis(file, model):
-    IMM_SIZE = 224  # Replace with your desired size
-
-    # Initialize image variable
-    image = None
-
-    try:
-        # Attempt to read the image from the file
-        pil_image = Image.open(file)
-        image = np.array(pil_image)
-    except Exception as e:
-        # Print an error message if the image cannot be read
-        print(f"Error reading image from {file}: {e}")
-
-    # Check if image is None (i.e., an error occurred during image reading)
-    if image is None:
-        # Handle the error or return an appropriate value
-        return None
-
-    # Prepare image for classification
-    # Resize the image to the desired size
-    resized_image = cv2.resize(image, (IMM_SIZE, IMM_SIZE))
-
-    # Convert RGB to grayscale if the image is in color
-    if len(resized_image.shape) > 2:
-        resized_image = cv2.cvtColor(resized_image, cv2.COLOR_RGB2GRAY)
-
-    # Reshape input images
-    resized_image = resized_image.reshape(-1, IMM_SIZE, IMM_SIZE, 1)
-
-    # Normalize the data (if needed)
-    # You may need to adjust this part based on how you trained your model
-    resized_image = resized_image / 255.0
+def diagnosis(file, model, IMM_SIZE):
+    # Load and preprocess the image
+    img = image.load_img(file, target_size=(IMM_SIZE, IMM_SIZE), color_mode="grayscale")
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array /= 255.0  # Normalize to [0, 1]
 
     # Predict the diagnosis
-    predicted_probabilities = model.predict(resized_image)
-    diag = np.argmax(predicted_probabilities, axis=-1)
+    predicted_probabilities = model.predict(img_array)
+    predicted_class = np.argmax(predicted_probabilities, axis=-1)[0]
 
-    # Load history and lab from pickle files
-    with open('history.pickle', 'rb') as f:
-        history = pickle.load(f)
+    # Map the predicted class to the diagnosis
+    diagnosis_mapping = {0: "Covid", 1: "Normal", 2: "Pneumonia"}
+    predicted_diagnosis = diagnosis_mapping[predicted_class]
 
-    with open('lab.pickle', 'rb') as f:
-        lab = pickle.load(f)
-
-    # Find the name of the diagnosis
-    diag = list(lab.keys())[list(lab.values()).index(diag[0])]
-
-    return diag
-
+    return predicted_diagnosis
 
 # Main Streamlit app
 def main():
     st.title("Chest X-ray Image Diagnosis App")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+
+    # File upload for lab and history pickles
+    lab_pickle_file = st.file_uploader("Upload lab.pickle file", type=["pickle"])
+    history_pickle_file = st.file_uploader("Upload history.pickle file", type=["pickle"])
 
     if uploaded_file is not None:
         st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
@@ -87,13 +53,36 @@ def main():
         # Load the model
         model = load_model()
 
+        # Specify the image size
+        IMM_SIZE = 224
+
         try:
             # Get diagnosis
-            result = diagnosis(uploaded_file, model)
+            result = diagnosis(uploaded_file, model, IMM_SIZE)
             st.success(f"The predicted diagnosis is: {result}")
         except Exception as e:
             st.error(f"Error during diagnosis: {e}")
             print("Error during diagnosis:", e)
+
+        # Additional processing using lab and history pickles
+        if lab_pickle_file is not None and history_pickle_file is not None:
+            try:
+                # Load lab data
+                with open(lab_pickle_file, 'rb') as lab_file:
+                    lab_data = pickle.load(lab_file)
+
+                # Load history data
+                with open(history_pickle_file, 'rb') as history_file:
+                    history_data = pickle.load(history_file)
+
+                # Perform further analysis using lab and history data
+                # ...
+
+            except Exception as e:
+                st.error(f"Error during additional processing: {e}")
+                print("Error during additional processing:", e)
+
+# ...
 
 if __name__ == "__main__":
     main()
