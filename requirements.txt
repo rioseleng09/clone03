@@ -6,4 +6,5 @@ tensorflow==2.14.0
 scikit-learn==1.2.2
 mahotas==1.4.13
 opencv-python==4.5.3.56
+opencv-python-headless==4.5.3.56
 imageio==2.14.0
