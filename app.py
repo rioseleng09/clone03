@@ -76,6 +76,8 @@ def main():
                     history_data = pickle.load(history_file)
 
                 # Perform further analysis using lab and history data
+                st.write("Lab Data:", lab_data)
+                st.write("History Data:", history_data)
                 # ...
 
             except Exception as e:
