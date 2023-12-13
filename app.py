@@ -80,6 +80,7 @@ def diagnosis(file, model):
 
     return diag
 
+
 # Main Streamlit app
 def main():
     st.title("Chest X-ray Image Diagnosis App")
